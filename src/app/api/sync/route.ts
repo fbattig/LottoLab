@@ -4,7 +4,7 @@ import { games, draws, syncLog } from "@/lib/db/schema";
 import { ensureDb } from "@/lib/db/migrate";
 import { scrapeOlgApi } from "@/lib/scraper/olg-api";
 import { scrapeFallback } from "@/lib/scraper/fallback-scraper";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,33 +49,49 @@ export async function POST(request: NextRequest) {
 
     if (result.success && result.draws.length > 0) {
       for (const draw of result.draws) {
+        const drawNumber = draw.drawNumber ?? null;
+
+        // Check for existing draw (handles NULL draw_number which UNIQUE constraint misses)
+        const existing = db
+          .select({ id: draws.id })
+          .from(draws)
+          .where(
+            and(
+              eq(draws.gameId, game.id),
+              eq(draws.drawDate, draw.drawDate),
+              drawNumber
+                ? eq(draws.drawNumber, drawNumber)
+                : isNull(draws.drawNumber)
+            )
+          )
+          .get();
+
+        if (existing) {
+          if (!lastDrawDate || draw.drawDate > lastDrawDate) {
+            lastDrawDate = draw.drawDate;
+          }
+          continue;
+        }
+
         try {
           db.insert(draws)
             .values({
               gameId: game.id,
               drawDate: draw.drawDate,
-              drawNumber: draw.drawNumber ?? null,
+              drawNumber,
               numbers: JSON.stringify(draw.numbers),
               bonusNumber: draw.bonusNumber ?? null,
               jackpotAmount: draw.jackpotAmount ?? null,
             })
             .run();
           drawsAdded++;
-
-          if (!lastDrawDate || draw.drawDate > lastDrawDate) {
-            lastDrawDate = draw.drawDate;
-          }
         } catch (err) {
-          // Skip duplicates (unique constraint violation)
-          const message =
-            err instanceof Error ? err.message : String(err);
-          if (!message.includes("UNIQUE constraint failed")) {
-            throw err;
-          }
-          // Still track the latest date even for duplicates
-          if (!lastDrawDate || draw.drawDate > lastDrawDate) {
-            lastDrawDate = draw.drawDate;
-          }
+          const message = err instanceof Error ? err.message : String(err);
+          if (!message.includes("UNIQUE constraint failed")) throw err;
+        }
+
+        if (!lastDrawDate || draw.drawDate > lastDrawDate) {
+          lastDrawDate = draw.drawDate;
         }
       }
     }
