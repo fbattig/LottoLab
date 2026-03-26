@@ -16,6 +16,7 @@ interface Props {
     name: string;
     pickCount: number;
     numberRange: number;
+    minNumber: number;
   };
   pool: FilteredPool;
   sumRange: { low: number; high: number };
@@ -90,7 +91,7 @@ export default function GeneratorWizard({
       const mid = Math.floor(game.numberRange / 2);
       const highCount = combo.filter((n) => n > mid).length;
       const lowCount = k - highCount;
-      const groups = new Set(combo.map((n) => Math.floor((n - 1) / 10)));
+      const groups = new Set(combo.map((n) => Math.floor((n - game.minNumber) / 10)));
 
       const sumInRange = sum >= sumRange.low && sum <= sumRange.high;
       const oddEvenRatio = `${oddCount}/${evenCount}`;

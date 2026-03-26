@@ -8,11 +8,34 @@ const NAV_ITEMS = [
   { href: "/sync", label: "Data Sync", icon: "🔄" },
 ];
 
-const GAMES = [
-  { slug: "lotto-649", name: "Lotto 6/49" },
-  { slug: "lotto-max", name: "Lotto Max" },
-  { slug: "ontario-49", name: "Ontario 49" },
+const GAME_GROUPS = [
+  {
+    label: "Primary Games",
+    games: [
+      { slug: "lotto-649", name: "Lotto 6/49" },
+      { slug: "lotto-max", name: "Lotto Max" },
+      { slug: "ontario-49", name: "Ontario 49" },
+    ],
+  },
+  {
+    label: "Secondary Games",
+    games: [
+      { slug: "daily-grand", name: "Daily Grand" },
+      { slug: "lottario", name: "Lottario" },
+    ],
+  },
+  {
+    label: "Daily Games",
+    games: [
+      { slug: "pick-2", name: "Pick-2" },
+      { slug: "pick-3", name: "Pick-3" },
+      { slug: "pick-4", name: "Pick-4" },
+      { slug: "daily-keno", name: "Daily Keno" },
+    ],
+  },
 ];
+
+const ALL_GAMES = GAME_GROUPS.flatMap((g) => g.games);
 
 const STRATEGIES = [
   { slug: "frequency", label: "Frequency" },
@@ -29,7 +52,7 @@ const STRATEGIES = [
 export default function Sidebar() {
   const pathname = usePathname();
 
-  const activeGame = GAMES.find((g) =>
+  const activeGame = ALL_GAMES.find((g) =>
     pathname.startsWith(`/games/${g.slug}`)
   );
 
@@ -58,14 +81,16 @@ export default function Sidebar() {
           </Link>
         ))}
 
-        <div className="pt-4 pb-2">
-          <p className="px-3 text-xs font-semibold text-muted uppercase tracking-wider">
-            Games
-          </p>
-        </div>
+        {GAME_GROUPS.map((group) => (
+          <div key={group.label}>
+            <div className="pt-4 pb-2">
+              <p className="px-3 text-xs font-semibold text-muted uppercase tracking-wider">
+                {group.label}
+              </p>
+            </div>
 
-        {GAMES.map((game) => (
-          <div key={game.slug}>
+            {group.games.map((game) => (
+              <div key={game.slug}>
             <Link
               href={`/games/${game.slug}`}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
@@ -126,6 +151,8 @@ export default function Sidebar() {
                 </Link>
               </div>
             )}
+          </div>
+            ))}
           </div>
         ))}
       </nav>

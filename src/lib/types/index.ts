@@ -6,6 +6,8 @@ export interface Game {
   numberRange: number;
   hasBonus: boolean | null;
   bonusRange: number | null;
+  minNumber: number | null;
+  allowDuplicates: boolean | null;
   drawDays: string | null;
   ticketPrice: number | null;
   createdAt: string | null;

@@ -8,7 +8,7 @@ export function analyzeFrequency(
   if (totalDraws === 0) return [];
 
   const counts = new Map<number, number>();
-  for (let n = 1; n <= config.numberRange; n++) {
+  for (let n = config.minNumber; n <= config.numberRange; n++) {
     counts.set(n, 0);
   }
 
@@ -20,7 +20,7 @@ export function analyzeFrequency(
 
   // Compute skip data inline for each number
   const skipMap = new Map<number, { currentSkip: number; avgSkip: number; isDue: boolean }>();
-  for (let n = 1; n <= config.numberRange; n++) {
+  for (let n = config.minNumber; n <= config.numberRange; n++) {
     const skips: number[] = [];
     let gap = 0;
     // Draws are assumed most-recent-first
@@ -53,7 +53,7 @@ export function analyzeFrequency(
 
   // Build unsorted scores
   const unsorted: { number: number; frequency: number; percentage: number }[] = [];
-  for (let n = 1; n <= config.numberRange; n++) {
+  for (let n = config.minNumber; n <= config.numberRange; n++) {
     const freq = counts.get(n) ?? 0;
     unsorted.push({
       number: n,
@@ -65,7 +65,7 @@ export function analyzeFrequency(
   // Sort by frequency descending for ranking
   unsorted.sort((a, b) => b.frequency - a.frequency || a.number - b.number);
 
-  const total = config.numberRange;
+  const total = config.numberRange - config.minNumber + 1;
   const hotThreshold = Math.ceil(total / 3);
   const warmThreshold = Math.ceil((total * 2) / 3);
 

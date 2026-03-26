@@ -1,4 +1,4 @@
-import { getGame, getParsedDraws } from "@/lib/db/queries";
+import { getGame, getParsedDraws, buildAnalysisConfig } from "@/lib/db/queries";
 import { notFound } from "next/navigation";
 import Disclaimer from "@/components/ui/Disclaimer";
 import WindowSizeSelector from "@/components/ui/WindowSizeSelector";
@@ -19,13 +19,7 @@ export default async function OddEvenPage({ params, searchParams }: Props) {
   const windowSize = parseInt(sp.window ?? "20") || undefined;
   const draws = getParsedDraws(game.id, windowSize);
 
-  const config = {
-    gameId: game.id,
-    gameSlug: game.slug,
-    pickCount: game.pickCount,
-    numberRange: game.numberRange,
-    windowSize: windowSize ?? draws.length,
-  };
+  const config = buildAnalysisConfig(game, windowSize ?? draws.length);
 
   const results = draws.length >= 5 ? analyzeOddEven(draws, config) : [];
 

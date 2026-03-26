@@ -1,4 +1,4 @@
-import { getGame, getParsedDraws } from "@/lib/db/queries";
+import { getGame, getParsedDraws, buildAnalysisConfig } from "@/lib/db/queries";
 import { notFound } from "next/navigation";
 import Disclaimer from "@/components/ui/Disclaimer";
 import { analyzeConsecutive } from "@/lib/analysis/consecutive";
@@ -15,13 +15,7 @@ export default async function ConsecutivePage({ params, searchParams }: Props) {
 
   const draws = getParsedDraws(game.id);
 
-  const config = {
-    gameId: game.id,
-    gameSlug: game.slug,
-    pickCount: game.pickCount,
-    numberRange: game.numberRange,
-    windowSize: draws.length,
-  };
+  const config = buildAnalysisConfig(game, draws.length);
 
   const results = draws.length >= 5 ? analyzeConsecutive(draws, config) : [];
 

@@ -59,8 +59,8 @@ export default async function GameOverviewPage({ params }: Props) {
         <div>
           <h2 className="text-2xl font-bold">{game.name}</h2>
           <p className="text-sm text-muted">
-            Pick {game.pickCount} from 1–{game.numberRange}
-            {game.hasBonus && " + bonus"} | $
+            Pick {game.pickCount} from {game.minNumber ?? 1}–{game.numberRange}
+            {game.hasBonus && ` + bonus (1–${game.bonusRange ?? game.numberRange})`} | $
             {game.ticketPrice?.toFixed(2)}/ticket
           </p>
         </div>

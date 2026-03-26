@@ -16,6 +16,8 @@ export const games = sqliteTable("games", {
   numberRange: integer("number_range").notNull(),
   hasBonus: integer("has_bonus", { mode: "boolean" }).default(false),
   bonusRange: integer("bonus_range"),
+  minNumber: integer("min_number").default(1),
+  allowDuplicates: integer("allow_duplicates", { mode: "boolean" }).default(false),
   drawDays: text("draw_days"),
   ticketPrice: real("ticket_price"),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),

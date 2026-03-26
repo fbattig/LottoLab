@@ -37,6 +37,8 @@ export default async function GeneratorPage({ params }: Props) {
     gameSlug: game.slug,
     pickCount: game.pickCount,
     numberRange: game.numberRange,
+    minNumber: game.minNumber ?? 1,
+    allowDuplicates: game.allowDuplicates ?? false,
     windowSize: draws.length,
   };
 
@@ -60,6 +62,7 @@ export default async function GeneratorPage({ params }: Props) {
           name: game.name,
           pickCount: game.pickCount,
           numberRange: game.numberRange,
+          minNumber: game.minNumber ?? 1,
         }}
         pool={pool}
         sumRange={{ low: Math.round(sumData.optimalLow), high: Math.round(sumData.optimalHigh) }}

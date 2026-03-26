@@ -43,15 +43,14 @@ async function getGameStats() {
   });
 }
 
-const DRAW_DAYS: Record<string, string[]> = {
-  "lotto-649": ["Wed", "Sat"],
-  "lotto-max": ["Tue", "Fri"],
-  "ontario-49": ["Wed", "Sat"],
-};
-
-function getNextDrawDay(slug: string): string {
-  const days = DRAW_DAYS[slug];
-  if (!days) return "—";
+function getNextDrawDay(drawDaysJson: string | null): string {
+  if (!drawDaysJson) return "—";
+  let days: string[];
+  try {
+    days = JSON.parse(drawDaysJson);
+  } catch {
+    return "—";
+  }
   const dayMap: Record<string, number> = {
     Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
   };
@@ -119,7 +118,7 @@ export default async function DashboardPage() {
               <div className="p-2 rounded bg-background">
                 <p className="text-muted">Next Draw</p>
                 <p className="text-sm font-semibold text-accent-gold">
-                  {getNextDrawDay(game.slug)}
+                  {getNextDrawDay(game.drawDays)}
                 </p>
               </div>
             </div>

@@ -8,6 +8,13 @@
       "when": 1774549558960,
       "tag": "0000_free_sphinx",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1774552400923,
+      "tag": "0001_heavy_argent",
+      "breakpoints": true
     }
   ]
 }

@@ -22,13 +22,23 @@ const OLG_URLS: Record<string, string> = {
     "https://www.olg.ca/en/lottery/play-lotto-max-encore/past-results.html",
   "ontario-49":
     "https://www.olg.ca/en/lottery/play-ontario-49-encore/past-results.html",
+  "daily-grand":
+    "https://www.olg.ca/en/lottery/play-daily-grand-encore/past-results.html",
+  "lottario":
+    "https://www.olg.ca/en/lottery/play-lottario-encore/past-results.html",
 };
 
-const GAME_CONFIG: Record<string, { pickCount: number; numberRange: number }> =
+const GAME_CONFIG: Record<string, { pickCount: number; numberRange: number; minNumber: number; allowDuplicates: boolean }> =
   {
-    "lotto-649": { pickCount: 6, numberRange: 49 },
-    "lotto-max": { pickCount: 7, numberRange: 50 },
-    "ontario-49": { pickCount: 6, numberRange: 49 },
+    "lotto-649": { pickCount: 6, numberRange: 49, minNumber: 1, allowDuplicates: false },
+    "lotto-max": { pickCount: 7, numberRange: 50, minNumber: 1, allowDuplicates: false },
+    "ontario-49": { pickCount: 6, numberRange: 49, minNumber: 1, allowDuplicates: false },
+    "daily-grand": { pickCount: 5, numberRange: 49, minNumber: 1, allowDuplicates: false },
+    "lottario": { pickCount: 6, numberRange: 45, minNumber: 1, allowDuplicates: false },
+    "pick-2": { pickCount: 2, numberRange: 9, minNumber: 0, allowDuplicates: true },
+    "pick-3": { pickCount: 3, numberRange: 9, minNumber: 0, allowDuplicates: true },
+    "pick-4": { pickCount: 4, numberRange: 9, minNumber: 0, allowDuplicates: true },
+    "daily-keno": { pickCount: 20, numberRange: 70, minNumber: 1, allowDuplicates: false },
   };
 
 const SCRAPE_DELAY_MS = parseInt(
@@ -43,27 +53,33 @@ function delay(ms: number): Promise<void> {
 function validateDraw(
   draw: ScrapedDraw,
   pickCount: number,
-  numberRange: number
+  numberRange: number,
+  minNumber: number = 1,
+  allowDuplicates: boolean = false,
+  bonusRange?: number
 ): string | null {
   if (draw.numbers.length !== pickCount) {
     return `Expected ${pickCount} numbers, got ${draw.numbers.length}`;
   }
   for (const n of draw.numbers) {
-    if (!Number.isInteger(n) || n < 1 || n > numberRange) {
-      return `Number ${n} out of range [1, ${numberRange}]`;
+    if (!Number.isInteger(n) || n < minNumber || n > numberRange) {
+      return `Number ${n} out of range [${minNumber}, ${numberRange}]`;
     }
   }
-  const unique = new Set(draw.numbers);
-  if (unique.size !== draw.numbers.length) {
-    return `Duplicate numbers found: ${draw.numbers.join(",")}`;
+  if (!allowDuplicates) {
+    const unique = new Set(draw.numbers);
+    if (unique.size !== draw.numbers.length) {
+      return `Duplicate numbers found: ${draw.numbers.join(",")}`;
+    }
   }
+  const effectiveBonusRange = bonusRange ?? numberRange;
   if (draw.bonusNumber !== undefined) {
     if (
       !Number.isInteger(draw.bonusNumber) ||
-      draw.bonusNumber < 1 ||
-      draw.bonusNumber > numberRange
+      draw.bonusNumber < minNumber ||
+      draw.bonusNumber > effectiveBonusRange
     ) {
-      return `Bonus number ${draw.bonusNumber} out of range [1, ${numberRange}]`;
+      return `Bonus number ${draw.bonusNumber} out of range [${minNumber}, ${effectiveBonusRange}]`;
     }
   }
   if (isNaN(Date.parse(draw.drawDate))) {
@@ -72,10 +88,10 @@ function validateDraw(
   return null;
 }
 
-function parseNumbersFromText(text: string): number[] {
+function parseNumbersFromText(text: string, minNumber: number = 1): number[] {
   const matches = text.match(/\d+/g);
   if (!matches) return [];
-  return matches.map(Number).filter((n) => n >= 1 && n <= 50);
+  return matches.map(Number).filter((n) => n >= minNumber && n <= 50);
 }
 
 function tryParseEmbeddedJson(html: string): ScrapedDraw[] {
@@ -255,11 +271,15 @@ export async function scrapeOlg(gameSlug: string): Promise<ScrapeResult> {
     // Validate all draws
     const validDraws: ScrapedDraw[] = [];
     for (const draw of allDraws) {
-      draw.numbers.sort((a, b) => a - b);
+      if (!config.allowDuplicates) {
+        draw.numbers.sort((a, b) => a - b);
+      }
       const validationError = validateDraw(
         draw,
         config.pickCount,
-        config.numberRange
+        config.numberRange,
+        config.minNumber,
+        config.allowDuplicates
       );
       if (validationError) {
         errors.push(

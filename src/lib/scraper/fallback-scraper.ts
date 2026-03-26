@@ -4,10 +4,16 @@ import { validateDraw, delay } from "./olg-scraper";
 
 const SCRAPE_DELAY_MS = parseInt(process.env.SCRAPE_DELAY_MS || "1500", 10);
 
-const GAME_CONFIG: Record<string, { pickCount: number; numberRange: number }> = {
-  "lotto-649": { pickCount: 6, numberRange: 49 },
-  "lotto-max": { pickCount: 7, numberRange: 50 },
-  "ontario-49": { pickCount: 6, numberRange: 49 },
+const GAME_CONFIG: Record<string, { pickCount: number; numberRange: number; minNumber: number; allowDuplicates: boolean }> = {
+  "lotto-649": { pickCount: 6, numberRange: 49, minNumber: 1, allowDuplicates: false },
+  "lotto-max": { pickCount: 7, numberRange: 50, minNumber: 1, allowDuplicates: false },
+  "ontario-49": { pickCount: 6, numberRange: 49, minNumber: 1, allowDuplicates: false },
+  "daily-grand": { pickCount: 5, numberRange: 49, minNumber: 1, allowDuplicates: false },
+  "lottario": { pickCount: 6, numberRange: 45, minNumber: 1, allowDuplicates: false },
+  "pick-2": { pickCount: 2, numberRange: 9, minNumber: 0, allowDuplicates: true },
+  "pick-3": { pickCount: 3, numberRange: 9, minNumber: 0, allowDuplicates: true },
+  "pick-4": { pickCount: 4, numberRange: 9, minNumber: 0, allowDuplicates: true },
+  "daily-keno": { pickCount: 20, numberRange: 70, minNumber: 1, allowDuplicates: false },
 };
 
 const FETCH_HEADERS = {
@@ -29,12 +35,22 @@ const LOTTOLORE_URLS: Record<string, { main: string; archivePrefix: string }> = 
     main: "https://www.lottolore.com/ontar49.html",
     archivePrefix: "https://www.lottolore.com/on49",
   },
+  "daily-grand": {
+    main: "https://www.lottolore.com/dailygn.html",
+    archivePrefix: "https://www.lottolore.com/daly",
+  },
+  "lottario": {
+    main: "https://www.lottolore.com/lottario.html",
+    archivePrefix: "https://www.lottolore.com/lott",
+  },
 };
 
 function parseLottolorePage(
   html: string,
   pickCount: number,
-  numberRange: number
+  numberRange: number,
+  minNumber: number = 1,
+  allowDuplicates: boolean = false
 ): { draws: ScrapedDraw[]; errors: string[] } {
   const draws: ScrapedDraw[] = [];
   const errors: string[] = [];
@@ -85,8 +101,10 @@ function parseLottolorePage(
       }
 
       const n = parseInt(cellText, 10);
-      if (!isNaN(n) && n >= 1 && n <= numberRange && numbers.length < pickCount) {
-        numbers.push(n);
+      if (!isNaN(n) && n >= minNumber && n <= numberRange && numbers.length < pickCount) {
+        if (allowDuplicates || !numbers.includes(n)) {
+          numbers.push(n);
+        }
       }
     });
 
@@ -94,11 +112,11 @@ function parseLottolorePage(
 
     const draw: ScrapedDraw = {
       drawDate,
-      numbers: numbers.sort((a, b) => a - b),
+      numbers: allowDuplicates ? numbers : numbers.sort((a, b) => a - b),
       bonusNumber,
     };
 
-    const err = validateDraw(draw, pickCount, numberRange);
+    const err = validateDraw(draw, pickCount, numberRange, minNumber, allowDuplicates);
     if (err) {
       errors.push(`Draw ${drawDate}: ${err}`);
     } else {
@@ -169,7 +187,9 @@ export async function scrapeFallback(
       const { draws, errors } = parseLottolorePage(
         html,
         config.pickCount,
-        config.numberRange
+        config.numberRange,
+        config.minNumber,
+        config.allowDuplicates
       );
 
       allErrors.push(...errors);

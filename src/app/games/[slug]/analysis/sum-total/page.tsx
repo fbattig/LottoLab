@@ -1,4 +1,4 @@
-import { getGame, getParsedDraws } from "@/lib/db/queries";
+import { getGame, getParsedDraws, buildAnalysisConfig } from "@/lib/db/queries";
 import { notFound } from "next/navigation";
 import Disclaimer from "@/components/ui/Disclaimer";
 import SumHistogram from "@/components/charts/SumHistogram";
@@ -16,13 +16,7 @@ export default async function SumTotalPage({ params, searchParams }: Props) {
 
   const draws = getParsedDraws(game.id);
 
-  const config = {
-    gameId: game.id,
-    gameSlug: game.slug,
-    pickCount: game.pickCount,
-    numberRange: game.numberRange,
-    windowSize: draws.length,
-  };
+  const config = buildAnalysisConfig(game, draws.length);
 
   const result = draws.length >= 5 ? analyzeSumTotal(draws, config) : null;
 

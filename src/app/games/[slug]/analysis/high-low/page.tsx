@@ -1,4 +1,4 @@
-import { getGame, getParsedDraws } from "@/lib/db/queries";
+import { getGame, getParsedDraws, buildAnalysisConfig } from "@/lib/db/queries";
 import { notFound } from "next/navigation";
 import Disclaimer from "@/components/ui/Disclaimer";
 import WindowSizeSelector from "@/components/ui/WindowSizeSelector";
@@ -19,16 +19,11 @@ export default async function HighLowPage({ params, searchParams }: Props) {
   const windowSize = parseInt(sp.window ?? "20") || undefined;
   const draws = getParsedDraws(game.id, windowSize);
 
-  const config = {
-    gameId: game.id,
-    gameSlug: game.slug,
-    pickCount: game.pickCount,
-    numberRange: game.numberRange,
-    windowSize: windowSize ?? draws.length,
-  };
+  const config = buildAnalysisConfig(game, windowSize ?? draws.length);
 
   const results = draws.length >= 5 ? analyzeHighLow(draws, config) : [];
-  const midpoint = Math.floor(game.numberRange / 2);
+  const min = game.minNumber ?? 1;
+  const midpoint = Math.floor((min + game.numberRange) / 2);
 
   return (
     <div>
@@ -36,7 +31,7 @@ export default async function HighLowPage({ params, searchParams }: Props) {
         <div>
           <h2 className="text-2xl font-bold">High/Low Balance</h2>
           <p className="text-sm text-muted mt-1">
-            Low (1–{midpoint}) vs High ({midpoint + 1}–{game.numberRange}) in{" "}
+            Low ({min}–{midpoint}) vs High ({midpoint + 1}–{game.numberRange}) in{" "}
             {draws.length} draws
           </p>
         </div>

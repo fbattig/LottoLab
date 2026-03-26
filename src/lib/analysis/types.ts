@@ -3,6 +3,8 @@ export interface AnalysisConfig {
   gameSlug: string;
   pickCount: number;
   numberRange: number;
+  minNumber: number;
+  allowDuplicates: boolean;
   windowSize: number;
 }
 

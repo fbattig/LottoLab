@@ -6,7 +6,7 @@ export function analyzeHighLow(
 ): RatioData[] {
   if (draws.length === 0) return [];
 
-  const midpoint = Math.floor(config.numberRange / 2);
+  const midpoint = Math.floor((config.minNumber + config.numberRange) / 2);
   const ratioCounts = new Map<string, number>();
 
   for (const draw of draws) {

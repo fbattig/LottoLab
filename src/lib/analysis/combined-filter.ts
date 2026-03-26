@@ -85,14 +85,14 @@ export function scoreCombination(
     Math.abs(oddCount - evenCount) <= 2;
 
   // High/low
-  const mid = Math.floor(config.numberRange / 2);
+  const mid = Math.floor((config.minNumber + config.numberRange) / 2);
   const lowCount = sorted.filter((n) => n <= mid).length;
   const highCount = sorted.length - lowCount;
   const highLowRatio = `${highCount}/${lowCount}`;
   const highLowOptimal = Math.abs(highCount - lowCount) <= 2;
 
   // Groups covered
-  const groups = new Set(sorted.map((n) => Math.floor((n - 1) / 10)));
+  const groups = new Set(sorted.map((n) => Math.floor((n - config.minNumber) / 10)));
   const groupsCovered = groups.size;
 
   // Consecutive check

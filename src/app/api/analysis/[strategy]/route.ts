@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getGame, getParsedDraws } from "@/lib/db/queries";
+import { getGame, getParsedDraws, buildAnalysisConfig } from "@/lib/db/queries";
 import { analyzeFrequency } from "@/lib/analysis/frequency";
 import { analyzeSkipHit } from "@/lib/analysis/skip-hit";
 import { analyzeSumTotal } from "@/lib/analysis/sum-total";
@@ -51,13 +51,7 @@ export async function GET(
     return NextResponse.json({ error: "Insufficient draw data" }, { status: 400 });
   }
 
-  const config: AnalysisConfig = {
-    gameId: game.id,
-    gameSlug: game.slug,
-    pickCount: game.pickCount,
-    numberRange: game.numberRange,
-    windowSize: windowSize ?? draws.length,
-  };
+  const config = buildAnalysisConfig(game, windowSize ?? draws.length);
 
   const result = analyzer(draws, config);
   return NextResponse.json({ strategy, game: gameSlug, windowSize: config.windowSize, result });

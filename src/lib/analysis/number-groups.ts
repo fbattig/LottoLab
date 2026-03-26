@@ -8,15 +8,14 @@ export function analyzeNumberGroups(
 
   // Build decade groups up to numberRange
   const groupDefs: { group: string; range: string; low: number; high: number }[] = [];
-  for (let start = 1; start <= config.numberRange; start += 10) {
-    const end = Math.min(start + 8, config.numberRange);
-    const label = start === 1 ? "1-9" : `${start}-${start + 9}`;
-    const rangeStr = `${start}-${Math.min(start + 9, config.numberRange)}`;
+  for (let start = config.minNumber; start <= config.numberRange; start += 10) {
+    const high = Math.min(start + 9, config.numberRange);
+    const rangeStr = `${start}-${high}`;
     groupDefs.push({
-      group: label,
+      group: rangeStr,
       range: rangeStr,
       low: start,
-      high: Math.min(start + 9, config.numberRange),
+      high,
     });
   }
 

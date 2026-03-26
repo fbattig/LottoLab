@@ -7,7 +7,7 @@ export function analyzeSkipHit(
   const totalDraws = draws.length;
   const results: SkipData[] = [];
 
-  for (let n = 1; n <= config.numberRange; n++) {
+  for (let n = config.minNumber; n <= config.numberRange; n++) {
     const skips: number[] = [];
     let gap = 0;
     let currentSkip = totalDraws;

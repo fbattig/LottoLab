@@ -100,7 +100,9 @@ function parseQuotedFormat(
   fields: string[],
   headerFields: string[],
   pickCount: number,
-  numberRange: number
+  numberRange: number,
+  minNumber: number = 1,
+  allowDuplicates: boolean = false
 ): { draw: ScrapedDraw | null; error: string | null } {
   const lower = headerFields.map((f) =>
     f.toLowerCase().replace(/['"]/g, "")
@@ -148,20 +150,24 @@ function parseQuotedFormat(
   }
 
   for (const n of numbers) {
-    if (n < 1 || n > numberRange) {
+    if (n < minNumber || n > numberRange) {
       return {
         draw: null,
-        error: `Number ${n} out of range [1, ${numberRange}]`,
+        error: `Number ${n} out of range [${minNumber}, ${numberRange}]`,
       };
     }
   }
 
-  const unique = new Set(numbers);
-  if (unique.size !== numbers.length) {
-    return { draw: null, error: `Duplicate numbers in draw` };
+  if (!allowDuplicates) {
+    const unique = new Set(numbers);
+    if (unique.size !== numbers.length) {
+      return { draw: null, error: `Duplicate numbers in draw` };
+    }
   }
 
-  numbers.sort((a, b) => a - b);
+  if (!allowDuplicates) {
+    numbers.sort((a, b) => a - b);
+  }
 
   let bonusNumber: number | undefined;
   if (bonusIdx !== -1 && fields[bonusIdx]) {
@@ -190,7 +196,9 @@ function parseQuotedFormat(
 function parseIndividualFormat(
   fields: string[],
   pickCount: number,
-  numberRange: number
+  numberRange: number,
+  minNumber: number = 1,
+  allowDuplicates: boolean = false
 ): { draw: ScrapedDraw | null; error: string | null } {
   // First field is date, next pickCount fields are numbers, optional bonus after
   if (fields.length < pickCount + 1) {
@@ -211,21 +219,25 @@ function parseIndividualFormat(
     if (isNaN(n)) {
       return { draw: null, error: `Non-numeric value in column ${i + 1}: "${fields[i]}"` };
     }
-    if (n < 1 || n > numberRange) {
+    if (n < minNumber || n > numberRange) {
       return {
         draw: null,
-        error: `Number ${n} out of range [1, ${numberRange}]`,
+        error: `Number ${n} out of range [${minNumber}, ${numberRange}]`,
       };
     }
     numbers.push(n);
   }
 
-  const unique = new Set(numbers);
-  if (unique.size !== numbers.length) {
-    return { draw: null, error: "Duplicate numbers in draw" };
+  if (!allowDuplicates) {
+    const unique = new Set(numbers);
+    if (unique.size !== numbers.length) {
+      return { draw: null, error: "Duplicate numbers in draw" };
+    }
   }
 
-  numbers.sort((a, b) => a - b);
+  if (!allowDuplicates) {
+    numbers.sort((a, b) => a - b);
+  }
 
   let bonusNumber: number | undefined;
   if (fields.length > pickCount + 1) {
@@ -251,7 +263,9 @@ function parseIndividualFormat(
 export function parseCsv(
   csvText: string,
   pickCount: number,
-  numberRange: number
+  numberRange: number,
+  minNumber: number = 1,
+  allowDuplicates: boolean = false
 ): CsvParseResult {
   const lines = csvText
     .split(/\r?\n/)
@@ -296,10 +310,12 @@ export function parseCsv(
         fields,
         headerFields,
         pickCount,
-        numberRange
+        numberRange,
+        minNumber,
+        allowDuplicates
       );
     } else {
-      result = parseIndividualFormat(fields, pickCount, numberRange);
+      result = parseIndividualFormat(fields, pickCount, numberRange, minNumber, allowDuplicates);
     }
 
     if (result.error) {

@@ -9,7 +9,7 @@ const DECADE_COLORS: Record<number, string> = {
 };
 
 function getDecadeColor(n: number): string {
-  const decade = Math.floor((n - 1) / 10);
+  const decade = n <= 0 ? 0 : Math.floor((n - 1) / 10);
   return DECADE_COLORS[decade] ?? "bg-purple-500";
 }
 

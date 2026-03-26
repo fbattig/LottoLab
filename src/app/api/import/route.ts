@@ -40,7 +40,9 @@ export async function POST(request: NextRequest) {
     const parseResult = parseCsv(
       csvText,
       game.pickCount,
-      game.numberRange
+      game.numberRange,
+      game.minNumber ?? 1,
+      game.allowDuplicates ?? false
     );
 
     if (!parseResult.success) {
