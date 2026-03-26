@@ -50,6 +50,7 @@ export default async function HistoryPage({ params, searchParams }: Props) {
     if (searchNums.length > 0) {
       allDraws = allDraws.filter((d) => {
         const nums = JSON.parse(d.numbers) as number[];
+        if (d.bonusNumber != null) nums.push(d.bonusNumber);
         return searchNums.every((n) => nums.includes(n));
       });
     }
