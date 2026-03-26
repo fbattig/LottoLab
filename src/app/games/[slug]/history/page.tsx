@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { games, draws } from "@/lib/db/schema";
 import { ensureDb } from "@/lib/db/migrate";
-import { eq, desc, gte, lte, and } from "drizzle-orm";
+import { eq, desc, gte, lte, like, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import NumberBallRow from "@/components/ui/NumberBallRow";
 import Disclaimer from "@/components/ui/Disclaimer";
@@ -9,7 +9,7 @@ import HistoryFilters from "@/components/ui/HistoryFilters";
 
 interface Props {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string; search?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; draw?: string; from?: string; to?: string }>;
 }
 
 const PAGE_SIZE = 50;
@@ -24,13 +24,15 @@ export default async function HistoryPage({ params, searchParams }: Props) {
 
   const page = Math.max(1, parseInt(sp.page ?? "1"));
   const searchNum = sp.search;
+  const drawNum = sp.draw;
   const fromDate = sp.from;
   const toDate = sp.to;
 
-  // Build SQL conditions for date range (Drizzle gte/lte work with text ISO dates)
+  // Build SQL conditions
   const conditions = [eq(draws.gameId, game.id)];
   if (fromDate) conditions.push(gte(draws.drawDate, fromDate));
   if (toDate) conditions.push(lte(draws.drawDate, toDate));
+  if (drawNum) conditions.push(like(draws.drawNumber, `%${drawNum}%`));
 
   let allDraws = db
     .select()
@@ -63,7 +65,7 @@ export default async function HistoryPage({ params, searchParams }: Props) {
         </p>
       </div>
 
-      <HistoryFilters slug={slug} search={searchNum} from={fromDate} to={toDate} />
+      <HistoryFilters slug={slug} search={searchNum} drawNum={drawNum} from={fromDate} to={toDate} />
 
       <div className="rounded-lg bg-card-bg border border-card-border overflow-hidden mb-4">
         <table className="w-full text-sm">
@@ -114,7 +116,7 @@ export default async function HistoryPage({ params, searchParams }: Props) {
         <div className="flex items-center justify-center gap-2">
           {page > 1 && (
             <a
-              href={`/games/${slug}/history?page=${page - 1}${searchNum ? `&search=${searchNum}` : ""}${fromDate ? `&from=${fromDate}` : ""}${toDate ? `&to=${toDate}` : ""}`}
+              href={`/games/${slug}/history?page=${page - 1}${searchNum ? `&search=${searchNum}` : ""}${drawNum ? `&draw=${drawNum}` : ""}${fromDate ? `&from=${fromDate}` : ""}${toDate ? `&to=${toDate}` : ""}`}
               className="px-3 py-1 text-xs rounded bg-card-bg border border-card-border hover:border-accent-blue"
             >
               Previous
@@ -125,7 +127,7 @@ export default async function HistoryPage({ params, searchParams }: Props) {
           </span>
           {page < totalPages && (
             <a
-              href={`/games/${slug}/history?page=${page + 1}${searchNum ? `&search=${searchNum}` : ""}${fromDate ? `&from=${fromDate}` : ""}${toDate ? `&to=${toDate}` : ""}`}
+              href={`/games/${slug}/history?page=${page + 1}${searchNum ? `&search=${searchNum}` : ""}${drawNum ? `&draw=${drawNum}` : ""}${fromDate ? `&from=${fromDate}` : ""}${toDate ? `&to=${toDate}` : ""}`}
               className="px-3 py-1 text-xs rounded bg-card-bg border border-card-border hover:border-accent-blue"
             >
               Next

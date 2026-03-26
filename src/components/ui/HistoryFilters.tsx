@@ -6,19 +6,22 @@ import { useState } from "react";
 interface Props {
   slug: string;
   search?: string;
+  drawNum?: string;
   from?: string;
   to?: string;
 }
 
-export default function HistoryFilters({ slug, search, from, to }: Props) {
+export default function HistoryFilters({ slug, search, drawNum, from, to }: Props) {
   const router = useRouter();
   const [searchNum, setSearchNum] = useState(search ?? "");
+  const [drawNumber, setDrawNumber] = useState(drawNum ?? "");
   const [fromDate, setFromDate] = useState(from ?? "");
   const [toDate, setToDate] = useState(to ?? "");
 
   function apply() {
     const params = new URLSearchParams();
     if (searchNum) params.set("search", searchNum);
+    if (drawNumber) params.set("draw", drawNumber);
     if (fromDate) params.set("from", fromDate);
     if (toDate) params.set("to", toDate);
     const qs = params.toString();
@@ -27,6 +30,7 @@ export default function HistoryFilters({ slug, search, from, to }: Props) {
 
   function clear() {
     setSearchNum("");
+    setDrawNumber("");
     setFromDate("");
     setToDate("");
     router.push(`/games/${slug}/history`);
@@ -35,13 +39,23 @@ export default function HistoryFilters({ slug, search, from, to }: Props) {
   return (
     <div className="flex flex-wrap items-end gap-3 mb-4 p-4 rounded-lg bg-card-bg border border-card-border">
       <div>
-        <label className="block text-xs text-muted mb-1">Search Number</label>
+        <label className="block text-xs text-muted mb-1">Contains Number</label>
         <input
           type="number"
           value={searchNum}
           onChange={(e) => setSearchNum(e.target.value)}
           placeholder="e.g. 17"
           className="w-24 px-2 py-1.5 text-sm rounded bg-background border border-card-border text-foreground"
+        />
+      </div>
+      <div>
+        <label className="block text-xs text-muted mb-1">Draw #</label>
+        <input
+          type="text"
+          value={drawNumber}
+          onChange={(e) => setDrawNumber(e.target.value)}
+          placeholder="e.g. MIDDAY"
+          className="w-28 px-2 py-1.5 text-sm rounded bg-background border border-card-border text-foreground"
         />
       </div>
       <div>
