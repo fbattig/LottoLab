@@ -39,13 +39,13 @@ export default function HistoryFilters({ slug, search, drawNum, from, to }: Prop
   return (
     <div className="flex flex-wrap items-end gap-3 mb-4 p-4 rounded-lg bg-card-bg border border-card-border">
       <div>
-        <label className="block text-xs text-muted mb-1">Contains Number</label>
+        <label className="block text-xs text-muted mb-1">Contains Numbers</label>
         <input
-          type="number"
+          type="text"
           value={searchNum}
           onChange={(e) => setSearchNum(e.target.value)}
-          placeholder="e.g. 17"
-          className="w-24 px-2 py-1.5 text-sm rounded bg-background border border-card-border text-foreground"
+          placeholder="e.g. 6,11,33"
+          className="w-32 px-2 py-1.5 text-sm rounded bg-background border border-card-border text-foreground"
         />
       </div>
       <div>

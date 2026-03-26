@@ -41,13 +41,16 @@ export default async function HistoryPage({ params, searchParams }: Props) {
     .orderBy(desc(draws.drawDate))
     .all();
 
-  // Filter by number in JS (requires parsing JSON)
+  // Filter by number(s) in JS — supports comma-separated (e.g. "6,11,33")
   if (searchNum) {
-    const num = parseInt(searchNum);
-    if (!isNaN(num)) {
+    const searchNums = searchNum
+      .split(",")
+      .map((s) => parseInt(s.trim(), 10))
+      .filter((n) => !isNaN(n));
+    if (searchNums.length > 0) {
       allDraws = allDraws.filter((d) => {
         const nums = JSON.parse(d.numbers) as number[];
-        return nums.includes(num);
+        return searchNums.every((n) => nums.includes(n));
       });
     }
   }
