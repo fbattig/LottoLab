@@ -1,65 +1,139 @@
-import Image from "next/image";
+import { db } from "@/lib/db";
+import { games, draws, syncLog } from "@/lib/db/schema";
+import { ensureDb } from "@/lib/db/migrate";
+import { eq, desc, count } from "drizzle-orm";
+import Link from "next/link";
+import Disclaimer from "@/components/ui/Disclaimer";
+import NumberBallRow from "@/components/ui/NumberBallRow";
 
-export default function Home() {
+async function getGameStats() {
+  ensureDb();
+
+  const allGames = db.select().from(games).all();
+
+  return allGames.map((game) => {
+    const totalDraws = db
+      .select({ count: count() })
+      .from(draws)
+      .where(eq(draws.gameId, game.id))
+      .get();
+
+    const latestDraw = db
+      .select()
+      .from(draws)
+      .where(eq(draws.gameId, game.id))
+      .orderBy(desc(draws.drawDate))
+      .limit(1)
+      .get();
+
+    const lastSync = db
+      .select()
+      .from(syncLog)
+      .where(eq(syncLog.gameId, game.id))
+      .orderBy(desc(syncLog.createdAt))
+      .limit(1)
+      .get();
+
+    return {
+      game,
+      totalDraws: totalDraws?.count ?? 0,
+      latestDraw: latestDraw ?? null,
+      lastSyncDate: lastSync?.createdAt ?? null,
+    };
+  });
+}
+
+const DRAW_DAYS: Record<string, string[]> = {
+  "lotto-649": ["Wed", "Sat"],
+  "lotto-max": ["Tue", "Fri"],
+  "ontario-49": ["Wed", "Sat"],
+};
+
+function getNextDrawDay(slug: string): string {
+  const days = DRAW_DAYS[slug];
+  if (!days) return "—";
+  const dayMap: Record<string, number> = {
+    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+  };
+  const now = new Date();
+  const today = now.getDay();
+  const drawDayNums = days.map((d) => dayMap[d]);
+  let minDiff = 7;
+  for (const dd of drawDayNums) {
+    let diff = dd - today;
+    if (diff <= 0) diff += 7;
+    if (diff < minDiff) minDiff = diff;
+  }
+  const next = new Date(now);
+  next.setDate(now.getDate() + minDiff);
+  return next.toLocaleDateString("en-CA");
+}
+
+export default async function DashboardPage() {
+  const stats = await getGameStats();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
+        <p className="text-sm text-muted mt-1">
+          Overview of all supported OLG lottery games
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {stats.map(({ game, totalDraws, latestDraw, lastSyncDate }) => (
+          <Link
+            key={game.slug}
+            href={`/games/${game.slug}`}
+            className="block p-5 rounded-xl bg-card-bg border border-card-border hover:border-accent-gold/40 transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-bold text-foreground">{game.name}</h3>
+              <span className="text-xs px-2 py-0.5 rounded bg-accent-green/10 text-accent-green">
+                Pick {game.pickCount} / {game.numberRange}
+              </span>
+            </div>
+
+            {latestDraw ? (
+              <div className="mb-3">
+                <p className="text-xs text-muted mb-1">
+                  Latest: {latestDraw.drawDate}
+                </p>
+                <NumberBallRow
+                  numbers={JSON.parse(latestDraw.numbers)}
+                  bonus={latestDraw.bonusNumber ?? undefined}
+                />
+              </div>
+            ) : (
+              <p className="text-sm text-muted mb-3">No draws synced yet</p>
+            )}
+
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-2 rounded bg-background">
+                <p className="text-muted">Total Draws</p>
+                <p className="text-lg font-bold text-foreground">
+                  {totalDraws.toLocaleString()}
+                </p>
+              </div>
+              <div className="p-2 rounded bg-background">
+                <p className="text-muted">Next Draw</p>
+                <p className="text-sm font-semibold text-accent-gold">
+                  {getNextDrawDay(game.slug)}
+                </p>
+              </div>
+            </div>
+
+            {lastSyncDate && (
+              <p className="text-[10px] text-muted mt-2">
+                Last sync: {lastSyncDate}
+              </p>
+            )}
+          </Link>
+        ))}
+      </div>
+
+      <Disclaimer />
     </div>
   );
 }
