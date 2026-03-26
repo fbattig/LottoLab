@@ -7,6 +7,7 @@ import Link from "next/link";
 import NumberBallRow from "@/components/ui/NumberBallRow";
 import Disclaimer from "@/components/ui/Disclaimer";
 import SyncButton from "@/components/ui/SyncButton";
+import QuickPicksButton from "@/components/ui/QuickPicksButton";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -84,6 +85,10 @@ export default async function GameOverviewPage({ params }: Props) {
             {game.drawDays ? JSON.parse(game.drawDays).join(", ") : "—"}
           </p>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <QuickPicksButton gameSlug={slug} />
       </div>
 
       <div className="mb-6">
