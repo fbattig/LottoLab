@@ -41,24 +41,33 @@ export default async function HistoryPage({ params, searchParams }: Props) {
     .orderBy(desc(draws.drawDate))
     .all();
 
-  // Filter by number(s) in JS — supports comma-separated (e.g. "6,11,33")
-  if (searchNum) {
-    const searchNums = searchNum
-      .split(",")
-      .map((s) => parseInt(s.trim(), 10))
-      .filter((n) => !isNaN(n));
-    if (searchNums.length > 0) {
-      allDraws = allDraws.filter((d) => {
-        const nums = JSON.parse(d.numbers) as number[];
-        if (d.bonusNumber != null) nums.push(d.bonusNumber);
-        return searchNums.every((n) => nums.includes(n));
-      });
-    }
+  // Filter by number(s) — show draws with at least 3 matching numbers (or all if fewer searched)
+  const searchNums = searchNum
+    ? searchNum
+        .split(",")
+        .map((s) => parseInt(s.trim(), 10))
+        .filter((n) => !isNaN(n))
+    : [];
+  const searchSet = new Set(searchNums);
+  const minMatch = Math.min(3, searchNums.length);
+
+  let scoredDraws = allDraws.map((d) => {
+    const nums = JSON.parse(d.numbers) as number[];
+    const allNums = d.bonusNumber != null ? [...nums, d.bonusNumber] : nums;
+    const matchCount = searchNums.length > 0
+      ? allNums.filter((n) => searchSet.has(n)).length
+      : 0;
+    return { ...d, matchCount, parsedNumbers: nums };
+  });
+
+  if (searchNums.length > 0) {
+    scoredDraws = scoredDraws.filter((d) => d.matchCount >= minMatch);
+    scoredDraws.sort((a, b) => b.matchCount - a.matchCount || b.drawDate.localeCompare(a.drawDate));
   }
 
-  const totalFiltered = allDraws.length;
+  const totalFiltered = scoredDraws.length;
   const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
-  const pagedDraws = allDraws.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pagedDraws = scoredDraws.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div>
@@ -78,21 +87,30 @@ export default async function HistoryPage({ params, searchParams }: Props) {
               <th className="text-left p-3">Date</th>
               <th className="text-left p-3">Draw #</th>
               <th className="text-left p-3">Numbers</th>
+              {searchNums.length > 0 && <th className="text-center p-3">Matches</th>}
               <th className="text-right p-3">Jackpot</th>
             </tr>
           </thead>
           <tbody>
             {pagedDraws.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-8 text-center text-muted">
-                  No draws found. Sync data first.
+                <td colSpan={searchNums.length > 0 ? 5 : 4} className="p-8 text-center text-muted">
+                  {searchNums.length >= 3
+                    ? "No draws found with at least 3 matching numbers."
+                    : "No draws found. Sync data first."}
                 </td>
               </tr>
             ) : (
               pagedDraws.map((draw) => (
                 <tr
                   key={draw.id}
-                  className="border-b border-card-border/50 hover:bg-background/50"
+                  className={`border-b border-card-border/50 hover:bg-background/50 ${
+                    draw.matchCount >= 5
+                      ? "bg-accent-gold/10"
+                      : draw.matchCount >= 4
+                      ? "bg-accent-green/10"
+                      : ""
+                  }`}
                 >
                   <td className="p-3 text-xs">{draw.drawDate}</td>
                   <td className="p-3 text-xs text-muted">
@@ -100,10 +118,28 @@ export default async function HistoryPage({ params, searchParams }: Props) {
                   </td>
                   <td className="p-3">
                     <NumberBallRow
-                      numbers={JSON.parse(draw.numbers)}
+                      numbers={draw.parsedNumbers}
                       bonus={draw.bonusNumber ?? undefined}
+                      highlightNumbers={searchNums.length > 0 ? searchSet : undefined}
                     />
                   </td>
+                  {searchNums.length > 0 && (
+                    <td className="p-3 text-center">
+                      <span
+                        className={`text-xs font-bold px-2 py-0.5 rounded ${
+                          draw.matchCount >= 5
+                            ? "bg-accent-gold/20 text-accent-gold"
+                            : draw.matchCount >= 4
+                            ? "bg-accent-green/20 text-accent-green"
+                            : draw.matchCount >= 3
+                            ? "bg-accent-blue/20 text-accent-blue"
+                            : "text-muted"
+                        }`}
+                      >
+                        {draw.matchCount}/{searchNums.length}
+                      </span>
+                    </td>
+                  )}
                   <td className="p-3 text-xs text-right text-accent-gold">
                     {draw.jackpotAmount
                       ? `$${(draw.jackpotAmount / 1_000_000).toFixed(1)}M`
