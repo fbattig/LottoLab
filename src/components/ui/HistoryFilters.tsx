@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface Props {
   slug: string;
@@ -17,16 +17,32 @@ export default function HistoryFilters({ slug, search, drawNum, from, to }: Prop
   const [drawNumber, setDrawNumber] = useState(drawNum ?? "");
   const [fromDate, setFromDate] = useState(from ?? "");
   const [toDate, setToDate] = useState(to ?? "");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isInitial = useRef(true);
 
-  function apply() {
+  function buildUrl(s: string, d: string, f: string, t: string) {
     const params = new URLSearchParams();
-    if (searchNum) params.set("search", searchNum);
-    if (drawNumber) params.set("draw", drawNumber);
-    if (fromDate) params.set("from", fromDate);
-    if (toDate) params.set("to", toDate);
+    if (s) params.set("search", s);
+    if (d) params.set("draw", d);
+    if (f) params.set("from", f);
+    if (t) params.set("to", t);
     const qs = params.toString();
-    router.push(`/games/${slug}/history${qs ? `?${qs}` : ""}`);
+    return `/games/${slug}/history${qs ? `?${qs}` : ""}`;
   }
+
+  useEffect(() => {
+    if (isInitial.current) {
+      isInitial.current = false;
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      router.push(buildUrl(searchNum, drawNumber, fromDate, toDate));
+    }, 400);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchNum, drawNumber, fromDate, toDate]);
 
   function clear() {
     setSearchNum("");
@@ -78,12 +94,6 @@ export default function HistoryFilters({ slug, search, drawNum, from, to }: Prop
           className="px-2 py-1.5 text-sm rounded bg-background border border-card-border text-foreground"
         />
       </div>
-      <button
-        onClick={apply}
-        className="px-3 py-1.5 text-sm rounded bg-accent-blue text-white hover:bg-accent-blue/80"
-      >
-        Filter
-      </button>
       <button
         onClick={clear}
         className="px-3 py-1.5 text-sm rounded bg-card-border text-muted hover:text-foreground"
