@@ -48,6 +48,7 @@ export default function HistoryFilters({ slug, search, from, to }: Props) {
         <label className="block text-xs text-muted mb-1">From Date</label>
         <input
           type="date"
+          style={{ colorScheme: "dark" }}
           value={fromDate}
           onChange={(e) => setFromDate(e.target.value)}
           className="px-2 py-1.5 text-sm rounded bg-background border border-card-border text-foreground"
@@ -57,6 +58,7 @@ export default function HistoryFilters({ slug, search, from, to }: Props) {
         <label className="block text-xs text-muted mb-1">To Date</label>
         <input
           type="date"
+          style={{ colorScheme: "dark" }}
           value={toDate}
           onChange={(e) => setToDate(e.target.value)}
           className="px-2 py-1.5 text-sm rounded bg-background border border-card-border text-foreground"

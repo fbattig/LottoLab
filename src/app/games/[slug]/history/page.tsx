@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { games, draws } from "@/lib/db/schema";
 import { ensureDb } from "@/lib/db/migrate";
-import { eq, desc, like, count, and } from "drizzle-orm";
+import { eq, desc, gte, lte, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import NumberBallRow from "@/components/ui/NumberBallRow";
 import Disclaimer from "@/components/ui/Disclaimer";
@@ -27,31 +27,19 @@ export default async function HistoryPage({ params, searchParams }: Props) {
   const fromDate = sp.from;
   const toDate = sp.to;
 
+  // Build SQL conditions for date range (Drizzle gte/lte work with text ISO dates)
   const conditions = [eq(draws.gameId, game.id)];
-  if (fromDate) {
-    conditions.push(
-      // draw_date >= fromDate
-      // Using raw sql via like won't work, but we can filter in the query
-      // Actually drizzle supports gte with text comparison for ISO dates
-    );
-  }
+  if (fromDate) conditions.push(gte(draws.drawDate, fromDate));
+  if (toDate) conditions.push(lte(draws.drawDate, toDate));
 
-  // Build the query with filters
-  let query = db
+  let allDraws = db
     .select()
     .from(draws)
-    .where(eq(draws.gameId, game.id))
-    .orderBy(desc(draws.drawDate));
+    .where(and(...conditions))
+    .orderBy(desc(draws.drawDate))
+    .all();
 
-  // Get all draws (we'll filter in JS for search/date since drizzle sqlite has limited operators)
-  let allDraws = query.all();
-
-  if (fromDate) {
-    allDraws = allDraws.filter((d) => d.drawDate >= fromDate);
-  }
-  if (toDate) {
-    allDraws = allDraws.filter((d) => d.drawDate <= toDate);
-  }
+  // Filter by number in JS (requires parsing JSON)
   if (searchNum) {
     const num = parseInt(searchNum);
     if (!isNaN(num)) {
