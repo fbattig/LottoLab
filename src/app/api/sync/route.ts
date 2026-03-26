@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { games, draws, syncLog } from "@/lib/db/schema";
 import { ensureDb } from "@/lib/db/migrate";
-import { scrapeOlg } from "@/lib/scraper/olg-scraper";
+import { scrapeOlgApi } from "@/lib/scraper/olg-api";
 import { scrapeFallback } from "@/lib/scraper/fallback-scraper";
 import { eq } from "drizzle-orm";
-import type { ScrapedDraw } from "@/lib/scraper/olg-scraper";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,11 +33,15 @@ export async function POST(request: NextRequest) {
     }
 
     let result;
-    if (source === "olg") {
-      result = await scrapeOlg(gameSlug);
-    } else {
-      // Go straight to fallback (OLG pages are JS-rendered and can't be scraped with Cheerio)
+    if (source === "fallback") {
       result = await scrapeFallback(gameSlug);
+    } else {
+      // Use OLG gateway API (works for all games)
+      result = await scrapeOlgApi(gameSlug);
+      if (!result.success) {
+        // Fall back to lottolore scraping
+        result = await scrapeFallback(gameSlug);
+      }
     }
 
     let drawsAdded = 0;
