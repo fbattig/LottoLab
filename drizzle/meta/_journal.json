@@ -15,6 +15,13 @@
       "when": 1774552400923,
       "tag": "0001_heavy_argent",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1774900000000,
+      "tag": "0002_predictions",
+      "breakpoints": true
     }
   ]
 }

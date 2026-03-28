@@ -1,0 +1,154 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "prevId": "486d8fbe-9b0a-4ca7-8d54-39802113b65d",
+  "tables": {
+    "analysis_cache": {
+      "name": "analysis_cache",
+      "columns": {
+        "id": { "name": "id", "type": "integer", "primaryKey": true, "notNull": true, "autoincrement": true },
+        "game_id": { "name": "game_id", "type": "integer", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "strategy_key": { "name": "strategy_key", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "window_size": { "name": "window_size", "type": "integer", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "result_data": { "name": "result_data", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "draws_hash": { "name": "draws_hash", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "computed_at": { "name": "computed_at", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false, "default": "CURRENT_TIMESTAMP" }
+      },
+      "indexes": {
+        "uq_analysis_cache_lookup": { "name": "uq_analysis_cache_lookup", "columns": ["game_id", "strategy_key", "window_size"], "isUnique": true }
+      },
+      "foreignKeys": {
+        "analysis_cache_game_id_games_id_fk": { "name": "analysis_cache_game_id_games_id_fk", "tableFrom": "analysis_cache", "tableTo": "games", "columnsFrom": ["game_id"], "columnsTo": ["id"], "onDelete": "no action", "onUpdate": "no action" }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "draws": {
+      "name": "draws",
+      "columns": {
+        "id": { "name": "id", "type": "integer", "primaryKey": true, "notNull": true, "autoincrement": true },
+        "game_id": { "name": "game_id", "type": "integer", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "draw_date": { "name": "draw_date", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "draw_number": { "name": "draw_number", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "numbers": { "name": "numbers", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "bonus_number": { "name": "bonus_number", "type": "integer", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "encore": { "name": "encore", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "jackpot_amount": { "name": "jackpot_amount", "type": "real", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "created_at": { "name": "created_at", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false, "default": "CURRENT_TIMESTAMP" },
+        "updated_at": { "name": "updated_at", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false, "default": "CURRENT_TIMESTAMP" }
+      },
+      "indexes": {
+        "uq_draws_game_date_number": { "name": "uq_draws_game_date_number", "columns": ["game_id", "draw_date", "draw_number"], "isUnique": true },
+        "idx_draws_game_date": { "name": "idx_draws_game_date", "columns": ["game_id", "draw_date"], "isUnique": false },
+        "idx_draws_game_id": { "name": "idx_draws_game_id", "columns": ["game_id"], "isUnique": false }
+      },
+      "foreignKeys": {
+        "draws_game_id_games_id_fk": { "name": "draws_game_id_games_id_fk", "tableFrom": "draws", "tableTo": "games", "columnsFrom": ["game_id"], "columnsTo": ["id"], "onDelete": "no action", "onUpdate": "no action" }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "games": {
+      "name": "games",
+      "columns": {
+        "id": { "name": "id", "type": "integer", "primaryKey": true, "notNull": true, "autoincrement": true },
+        "slug": { "name": "slug", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "name": { "name": "name", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "pick_count": { "name": "pick_count", "type": "integer", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "number_range": { "name": "number_range", "type": "integer", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "has_bonus": { "name": "has_bonus", "type": "integer", "primaryKey": false, "notNull": false, "autoincrement": false, "default": false },
+        "bonus_range": { "name": "bonus_range", "type": "integer", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "min_number": { "name": "min_number", "type": "integer", "primaryKey": false, "notNull": false, "autoincrement": false, "default": 1 },
+        "allow_duplicates": { "name": "allow_duplicates", "type": "integer", "primaryKey": false, "notNull": false, "autoincrement": false, "default": false },
+        "draw_days": { "name": "draw_days", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "ticket_price": { "name": "ticket_price", "type": "real", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "created_at": { "name": "created_at", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false, "default": "CURRENT_TIMESTAMP" }
+      },
+      "indexes": {
+        "games_slug_unique": { "name": "games_slug_unique", "columns": ["slug"], "isUnique": true }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "predictions": {
+      "name": "predictions",
+      "columns": {
+        "id": { "name": "id", "type": "integer", "primaryKey": true, "notNull": true, "autoincrement": true },
+        "game_id": { "name": "game_id", "type": "integer", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "numbers": { "name": "numbers", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "rationale": { "name": "rationale", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "score": { "name": "score", "type": "real", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "draws_analyzed": { "name": "draws_analyzed", "type": "integer", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "for_draw_date": { "name": "for_draw_date", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "created_at": { "name": "created_at", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false, "default": "CURRENT_TIMESTAMP" }
+      },
+      "indexes": {
+        "idx_predictions_game_date": { "name": "idx_predictions_game_date", "columns": ["game_id", "created_at"], "isUnique": false }
+      },
+      "foreignKeys": {
+        "predictions_game_id_games_id_fk": { "name": "predictions_game_id_games_id_fk", "tableFrom": "predictions", "tableTo": "games", "columnsFrom": ["game_id"], "columnsTo": ["id"], "onDelete": "no action", "onUpdate": "no action" }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "saved_selections": {
+      "name": "saved_selections",
+      "columns": {
+        "id": { "name": "id", "type": "integer", "primaryKey": true, "notNull": true, "autoincrement": true },
+        "game_id": { "name": "game_id", "type": "integer", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "name": { "name": "name", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "numbers": { "name": "numbers", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "strategy_scores": { "name": "strategy_scores", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "composite_score": { "name": "composite_score", "type": "real", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "notes": { "name": "notes", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "created_at": { "name": "created_at", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false, "default": "CURRENT_TIMESTAMP" },
+        "updated_at": { "name": "updated_at", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false, "default": "CURRENT_TIMESTAMP" }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "saved_selections_game_id_games_id_fk": { "name": "saved_selections_game_id_games_id_fk", "tableFrom": "saved_selections", "tableTo": "games", "columnsFrom": ["game_id"], "columnsTo": ["id"], "onDelete": "no action", "onUpdate": "no action" }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "sync_log": {
+      "name": "sync_log",
+      "columns": {
+        "id": { "name": "id", "type": "integer", "primaryKey": true, "notNull": true, "autoincrement": true },
+        "game_id": { "name": "game_id", "type": "integer", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "sync_type": { "name": "sync_type", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "draws_added": { "name": "draws_added", "type": "integer", "primaryKey": false, "notNull": false, "autoincrement": false, "default": 0 },
+        "last_draw_date": { "name": "last_draw_date", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "status": { "name": "status", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false, "default": "'success'" },
+        "error_message": { "name": "error_message", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "created_at": { "name": "created_at", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false, "default": "CURRENT_TIMESTAMP" }
+      },
+      "indexes": {
+        "idx_sync_log_game": { "name": "idx_sync_log_game", "columns": ["game_id", "created_at"], "isUnique": false }
+      },
+      "foreignKeys": {
+        "sync_log_game_id_games_id_fk": { "name": "sync_log_game_id_games_id_fk", "tableFrom": "sync_log", "tableTo": "games", "columnsFrom": ["game_id"], "columnsTo": ["id"], "onDelete": "no action", "onUpdate": "no action" }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

@@ -83,6 +83,27 @@ export const savedSelections = sqliteTable("saved_selections", {
   updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const predictions = sqliteTable(
+  "predictions",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    gameId: integer("game_id")
+      .notNull()
+      .references(() => games.id),
+    numbers: text("numbers").notNull(),
+    rationale: text("rationale"),
+    score: real("score"),
+    drawsAnalyzed: integer("draws_analyzed"),
+    forDrawDate: text("for_draw_date"),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("idx_predictions_game_date").on(table.gameId, table.createdAt),
+  ]
+);
+
 export const analysisCache = sqliteTable(
   "analysis_cache",
   {
