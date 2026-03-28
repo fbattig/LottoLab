@@ -164,8 +164,9 @@ export function generateQuickPicks(
   // Strategy 5: Balanced mix (optimal sum + odd/even + group coverage)
   picks.push(generateBalancedPick(config, recentSorted, dueDigits, sumLow, sumHigh, oeBest, "Balanced: optimal sum, odd/even, group coverage"));
 
-  // Score and sort
+  // Sort numbers ascending in each pick, then score
   for (const pick of picks) {
+    pick.numbers.sort((a, b) => a - b);
     pick.score = scorePick(pick.numbers, config, recentFreq, lastSeen, avgSkips, sumLow, sumHigh);
   }
 
@@ -193,6 +194,7 @@ export function generateQuickPicks(
       if (allowDuplicates || !nums.includes(n)) nums.push(n);
     }
     if (nums.length === pickCount) {
+      nums.sort((a, b) => a - b);
       const key = nums.join(",");
       if (!seen.has(key)) {
         seen.add(key);

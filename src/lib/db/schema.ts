@@ -95,6 +95,7 @@ export const predictions = sqliteTable(
     score: real("score"),
     drawsAnalyzed: integer("draws_analyzed"),
     forDrawDate: text("for_draw_date"),
+    forDrawNumber: text("for_draw_number"),
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),

@@ -26,6 +26,7 @@ interface LatestDraw {
 
 interface PredictionBatch {
   forDrawDate: string;
+  forDrawNumber: string | null;
   createdAt: string;
   drawsAnalyzed: number;
   picks: PredictedPick[];
@@ -83,12 +84,11 @@ export default function QuickPicksButton({ gameSlug }: { gameSlug: string }) {
     }
   }
 
-  async function deleteBatch(forDate: string) {
+  async function deleteBatch(forDate: string, forDrawNumber: string | null) {
     try {
-      await fetch(
-        `/api/quick-picks?game=${gameSlug}&forDate=${encodeURIComponent(forDate)}`,
-        { method: "DELETE" }
-      );
+      let url = `/api/quick-picks?game=${gameSlug}&forDate=${encodeURIComponent(forDate)}`;
+      if (forDrawNumber) url += `&forDrawNumber=${encodeURIComponent(forDrawNumber)}`;
+      await fetch(url, { method: "DELETE" });
       await loadPredictions();
     } catch {
       setError("Failed to delete predictions");
@@ -154,9 +154,10 @@ export default function QuickPicksButton({ gameSlug }: { gameSlug: string }) {
             ? batch.winResults.filter((w) => w.isWin).length
             : 0;
 
+          const batchKey = `${batch.forDrawDate}|${batch.forDrawNumber ?? ""}`;
           return (
             <div
-              key={batch.forDrawDate}
+              key={batchKey}
               className="rounded-lg bg-card-bg border border-card-border overflow-hidden"
             >
               {/* Batch header */}
@@ -172,6 +173,11 @@ export default function QuickPicksButton({ gameSlug }: { gameSlug: string }) {
                   </span>
                   <span className="text-sm font-semibold">
                     {batch.forDrawDate}
+                    {batch.forDrawNumber && (
+                      <span className="ml-1 text-xs text-accent-blue">
+                        {batch.forDrawNumber}
+                      </span>
+                    )}
                   </span>
                   <span className="text-xs text-muted">
                     ({batch.picks.length} picks, {batch.drawsAnalyzed} draws analyzed)
@@ -291,7 +297,7 @@ export default function QuickPicksButton({ gameSlug }: { gameSlug: string }) {
                   {/* Delete batch */}
                   <div className="flex justify-end pt-1">
                     <button
-                      onClick={() => deleteBatch(batch.forDrawDate)}
+                      onClick={() => deleteBatch(batch.forDrawDate, batch.forDrawNumber)}
                       className="text-[10px] text-accent-red/60 hover:text-accent-red transition-colors"
                     >
                       Delete this batch

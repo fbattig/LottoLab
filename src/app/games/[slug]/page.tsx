@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { games, draws } from "@/lib/db/schema";
 import { ensureDb } from "@/lib/db/migrate";
-import { eq, desc, count } from "drizzle-orm";
+import { eq, desc, asc, count } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import NumberBallRow from "@/components/ui/NumberBallRow";
@@ -30,7 +30,7 @@ export default async function GameOverviewPage({ params }: Props) {
     .select()
     .from(draws)
     .where(eq(draws.gameId, game.id))
-    .orderBy(desc(draws.drawDate))
+    .orderBy(desc(draws.drawDate), asc(draws.drawNumber))
     .limit(10)
     .all();
 
@@ -113,27 +113,33 @@ export default async function GameOverviewPage({ params }: Props) {
                   <th className="text-left p-3">Date</th>
                   <th className="text-left p-3">Draw #</th>
                   <th className="text-left p-3">Numbers</th>
+                  <th className="text-right p-3">Sum</th>
                   <th className="text-right p-3">Jackpot</th>
                 </tr>
               </thead>
               <tbody>
-                {recentDraws.map((draw) => (
-                  <tr key={draw.id} className="border-b border-card-border/50 hover:bg-background/50">
-                    <td className="p-3 text-xs">{draw.drawDate}</td>
-                    <td className="p-3 text-xs text-muted">{draw.drawNumber ?? "—"}</td>
-                    <td className="p-3">
-                      <NumberBallRow
-                        numbers={JSON.parse(draw.numbers)}
-                        bonus={draw.bonusNumber ?? undefined}
-                      />
-                    </td>
-                    <td className="p-3 text-xs text-right text-accent-gold">
-                      {draw.jackpotAmount
-                        ? `$${(draw.jackpotAmount / 1_000_000).toFixed(1)}M`
-                        : "—"}
-                    </td>
-                  </tr>
-                ))}
+                {recentDraws.map((draw) => {
+                  const nums = JSON.parse(draw.numbers) as number[];
+                  const sum = nums.reduce((a: number, b: number) => a + b, 0);
+                  return (
+                    <tr key={draw.id} className="border-b border-card-border/50 hover:bg-background/50">
+                      <td className="p-3 text-xs">{draw.drawDate}</td>
+                      <td className="p-3 text-xs text-muted">{draw.drawNumber ?? "—"}</td>
+                      <td className="p-3">
+                        <NumberBallRow
+                          numbers={nums}
+                          bonus={draw.bonusNumber ?? undefined}
+                        />
+                      </td>
+                      <td className="p-3 text-xs text-right font-semibold">{sum}</td>
+                      <td className="p-3 text-xs text-right text-accent-gold">
+                        {draw.jackpotAmount
+                          ? `$${(draw.jackpotAmount / 1_000_000).toFixed(1)}M`
+                          : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -162,6 +168,17 @@ export default async function GameOverviewPage({ params }: Props) {
             </h4>
             <p className="text-xs text-muted mt-1">
               Combined filter funnel
+            </p>
+          </Link>
+          <Link
+            href={`/games/${slug}/backtest`}
+            className="p-4 rounded-lg bg-accent-blue/10 border border-accent-blue/30 hover:border-accent-blue/60 transition-colors"
+          >
+            <h4 className="font-semibold text-sm text-accent-blue">
+              Backtesting
+            </h4>
+            <p className="text-xs text-muted mt-1">
+              Simulate past performance
             </p>
           </Link>
         </div>

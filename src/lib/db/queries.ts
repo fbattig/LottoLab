@@ -1,6 +1,6 @@
 import { db } from "./index";
 import { games, draws } from "./schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc } from "drizzle-orm";
 import { ensureDb } from "./migrate";
 import type { AnalysisConfig } from "@/lib/analysis/types";
 
@@ -25,6 +25,28 @@ export function getDraws(gameId: number, limit?: number) {
 
 export function getParsedDraws(gameId: number, windowSize?: number) {
   const rawDraws = getDraws(gameId, windowSize);
+  return rawDraws.map((d) => ({
+    ...d,
+    numbers: JSON.parse(d.numbers) as number[],
+  }));
+}
+
+export function getOrderedDraws(gameId: number, limit?: number) {
+  ensureDb();
+  const query = db
+    .select()
+    .from(draws)
+    .where(eq(draws.gameId, gameId))
+    .orderBy(desc(draws.drawDate), asc(draws.drawNumber));
+
+  if (limit) {
+    return query.limit(limit).all();
+  }
+  return query.all();
+}
+
+export function getOrderedParsedDraws(gameId: number, limit?: number) {
+  const rawDraws = getOrderedDraws(gameId, limit);
   return rawDraws.map((d) => ({
     ...d,
     numbers: JSON.parse(d.numbers) as number[],
